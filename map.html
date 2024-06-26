@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Realtime GPS Tracker</title>
+    <link rel="stylesheet" href="map.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div class="bg"></div>
+    <div class="bg-others"> 
+      <div class="container">
+        <h1>Realtime GPS Tracker</h1>
+        <center><hr style="height:2px; border:none; color:#ffffff; background-color:#ffffff; width:35%; margin: 0 auto 0 auto;"></center>
+        <p>by BASSIRAQUIDE</p>  
+        <center>
+          <button id="requestTracking" class="btn btn-primary">Request Tracking</button>
+          <div id="map-canvas" style="display: none;"></div>
+          <div id="alert" class="alert alert-danger" style="display: none;" role="alert">
+            User didn't allow for tracking.
+          </div>
+        </center>
+      </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+    <script>
+      window.lat = 37.7850;
+      window.lng = -122.4383;
+
+      var map;
+      var mark;
+      var lineCoords = [];
+
+      var initialize = function() {
+        map = new google.maps.Map(document.getElementById('map-canvas'), {center: {lat: lat, lng: lng}, zoom: 12});
+        mark = new google.maps.Marker({position: {lat: lat, lng: lng}, map: map});
+      };
+
+
+        firebaseConfig={
+"apiKey": "AIzaSyC8zYpL1c5oGUQ1IZK13tSsad7J53tNXCg",
+  "authDomain": "blind-gps-tracker.firebaseapp.com",
+  "databaseURL": "https://blind-gps-tracker-default-rtdb.firebaseio.com",
+  "projectId": "blind-gps-tracker",
+  "storageBucket": "blind-gps-tracker.appspot.com",
+  "messagingSenderId": "547895832369",
+  "appId": "1:547895832369:web:2f500aed48271eb8f78a10"
+    }
+
+    firebase.initializeApp(firebaseConfig);
+      var ref = firebase.database().ref();
+
+      // Request tracking button
+      document.getElementById('requestTracking').addEventListener('click', function() {
+        ref.update({trackingRequested: true});
+      });
+
+      ref.child('trackingConfirmed').on('value', function(snapshot) {
+        if (snapshot.val()) {
+          document.getElementById('map-canvas').style.display = 'block';
+          document.getElementById('alert').style.display = 'none';
+          ref.child('location').on('value', function(snapshot) {
+            var gps = snapshot.val();
+            lat = gps.LAT;
+            lng = gps.LNG;
+
+            map.setCenter({lat: lat, lng: lng, alt: 0});
+            mark.setPosition({lat: lat, lng: lng, alt: 0});
+            lineCoords.push(new google.maps.LatLng(lat, lng));
+
+            var lineCoordinatesPath = new google.maps.Polyline({
+              path: lineCoords,
+              geodesic: true,
+              strokeColor: '#2E10FF'
+            });
+            
+            lineCoordinatesPath.setMap(map);
+          });
+        } else {
+          document.getElementById('map-canvas').style.display = 'none';
+          document.getElementById('alert').style.display = 'block';
+        }
+      });
+
+      window.initialize = initialize;
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBwvDVUK4T9VHDV88n0_Fm55d30cysGZsY&callback=initialize"></script>
+  </body>
+</html>
+
